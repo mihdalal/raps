@@ -1,0 +1,31 @@
+<mujoco>
+    <include file="../scene/basic_scene.xml"/>
+    <include file="../objects/assets/basketball_dependencies.xml"/>
+    <include file="../objects/assets/xyz_base_dependencies.xml"/>
+
+  <worldbody>
+
+      <body name="bsktball" pos="0 0.6 0.03">
+        <freejoint/>
+        <include file="../objects/assets/basketball.xml"/>
+      </body>
+      <include file="../objects/assets/xyz_base.xml"/>
+
+      <body name="basket_goal" pos="0. 0.9 0">
+         <include file="../objects/assets/basketballhoop.xml"/>
+
+      </body>
+
+  </worldbody>
+  <actuator>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j0" name="torq_right_j0"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j1" name="torq_right_j1"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j2" name="torq_right_j2"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j3" name="torq_right_j3"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j4" name="torq_right_j4"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j5" name="torq_right_j5"/>
+      <motor ctrllimited="false" ctrlrange="-500 500" joint="right_j6" name="torq_right_j6"/>
+      <position ctrllimited="true" ctrlrange="-1 1" joint="r_close" kp="400"  user="1"/>
+      <position ctrllimited="true" ctrlrange="-1 1" joint="l_close" kp="400"  user="1"/>
+    </actuator>
+</mujoco>
