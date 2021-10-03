@@ -602,6 +602,8 @@ class KitchenV0(robot_env.RobotEnv):
     ):
         self.set_render_every_step(render_every_step, render_mode, render_im_shape)
         if not self.initializing:
+            if render_every_step and render_mode == "rgb_array":
+                self.img_array = []
             if self.control_mode in [
                 "joint_position",
                 "joint_velocity",
@@ -645,9 +647,8 @@ class KitchenV0(robot_env.RobotEnv):
                     self.robot.step(
                         self, a, step_duration=self.skip * self.model.opt.timestep
                     )
+                self.call_render_every_step()
             else:
-                if render_every_step and render_mode == "rgb_array":
-                    self.img_array = []
                 self.act(a)
         obs = self._get_obs()
 
