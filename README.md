@@ -55,6 +55,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia-000
 To install python requirements:
 
 ```
+conda create -n raps python=3.7
+conda activate raps
 ./setup_python_env.sh <absolute path to raps>
 ```
 
