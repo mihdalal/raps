@@ -15,7 +15,6 @@ from rlkit.core.eval_util import create_stats_ordered_dict
 
 from a2c_ppo_acktr import algo, utils
 from a2c_ppo_acktr.algo import gail
-from a2c_ppo_acktr.arguments import get_args
 from a2c_ppo_acktr.envs import make_vec_envs
 from a2c_ppo_acktr.evaluation import evaluate
 from a2c_ppo_acktr.model import Policy
@@ -28,7 +27,6 @@ def experiment(variant):
     env_kwargs = variant["env_kwargs"]
     multi_step_horizon = variant.get('multi_step_horizon', 1)
     seed = variant["seed"]
-    args = get_args()
 
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -175,20 +173,6 @@ def experiment(variant):
 
         rollouts.after_update()
 
-        # save for every interval-th episode or for the last epoch
-        if (
-            j % variant.get("save_interval", int(1e100)) == 0 or j == num_updates - 1
-        ) and args.save_dir != "":
-            save_path = os.path.join(args.save_dir, "ppo")
-            try:
-                os.makedirs(save_path)
-            except OSError:
-                pass
-
-            torch.save(
-                [actor_critic, getattr(utils.get_vec_normalize(envs), "obs_rms", None)],
-                os.path.join(save_path, args.env_name + ".pt"),
-            )
         total_train_expl_time += time.time()-train_expl_st
         if variant["eval_interval"] is not None and j % variant["eval_interval"] == 0:
             total_num_steps = (j + 1) * variant["num_processes"] * variant["num_steps"]
