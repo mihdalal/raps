@@ -2,7 +2,25 @@
 
 This repository is the official implementation of Accelerating Robotic Reinforcement Learning via Parameterized Action Primitives (RAPS).
 
+#### [[Project Website]](https://mihdalal.github.io/raps/)
+
+[Murtaza Dalal](https://mihdalal.github.io/), [Deepak Pathak*](https://www.cs.cmu.edu/~dpathak/), [Ruslan Salakhutdinov*](https://www.cs.cmu.edu/~rsalakhu/)<br/>
+(&#42; equal advising)
+
+CMU
+
 ![alt text](readme_files/raps.png)
+
+If you find this work useful in your research, please cite:
+```
+@inproceedings{dalal2021raps,
+    Author = {Dalal, Murtaza and Pathak, Deepak and
+              Salakhutdinov, Ruslan},
+    Title = {Accelerating Robotic Reinforcement Learning via Parameterized Action Primitives},
+    Booktitle = {NeurIPS},
+    Year = {2021}
+}
+```
 ## Requirements
 For dependencies, please run the following commands:
 ```
