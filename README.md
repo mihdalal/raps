@@ -22,7 +22,7 @@ If you find this work useful in your research, please cite:
 }
 ```
 ## Requirements
-For dependencies, please run the following commands:
+To install dependencies, please run the following commands:
 ```
 sudo apt-get update
 sudo apt-get install curl \
@@ -38,7 +38,7 @@ sudo apt-get install curl \
     virtualenv \
     wget \
     xpra \
-    xserver-xorg-dev \
+    xserver-xorg-dev
 sudo apt-get install libglfw3-dev libgles2-mesa-dev patchelf
 sudo mkdir /usr/lib/nvidia-000
 ```
@@ -55,6 +55,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia-000
 To install python requirements:
 
 ```
+conda create -n raps python=3.7
+conda activate raps
 ./setup_python_env.sh <absolute path to raps>
 ```
 
