@@ -372,7 +372,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
         self.scaler.step(optimizer)
-        optimizer.zero_grad(set_to_none=True)
+        optimizer.zero_grad()
 
     def train_networks(
         self,
