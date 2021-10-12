@@ -134,6 +134,7 @@ def main():
         cv2.imshow("maskOpen", maskOpen)
 
         cv2.waitKey(10)
+        print(x + w / 2)
 
 
 if __name__ == "__main__":

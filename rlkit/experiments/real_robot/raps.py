@@ -11,6 +11,8 @@ from rlkit.torch.model_based.dreamer.world_models import WorldModel
 from frankapy import FrankaArm
 from ros_image import RealsenseROSCamera
 import rospy
+import cv2
+import gym
 
 
 class FrankaEnv:
@@ -35,24 +37,22 @@ class FrankaEnv:
 
             self.franka = FrankaArm(init_node=False)
             print(f"connected to arm")
-            # Reset
-            self.reset()
-
-            # Construct camera
 
         self.action_space = Box(low=-1, high=1, dtype=np.float32, shape=(6,))
         self.observation_space = Box(
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
 
-        # self.wkspace_total_low = np.array([ 0.6400, -0.1732, -0.0312])
-        self.wkspace_total_low = np.array([0.3746, -0.2700, 0.1759])
-        self.wkspace_total_high = np.array([0.6407, 0.2972, 0.4281])
+        self.wkspace_total_low = np.array([0.19147676, -0.24988993, 0.11593331])
+        self.wkspace_total_high = np.array([0.48935749, 0.30219993, 0.6])
+        self.reward_range = (0, 1)
+        self.metadata={}
 
     def get_image(self):
 
         if self.use_robot:
             img = self.obs_cam.get_image()[:, :, ::-1]
+            img = cv2.resize(img, (64, 64), interpolation=cv2.INTER_AREA)
             color_img = img.transpose(2, 0, 1).flatten()
             return color_img
         else:
@@ -74,7 +74,6 @@ class FrankaEnv:
             T_ee_world = self.franka.get_pose()
             T_ee_world.translation += delta_xyz
             self.franka.goto_pose(T_ee_world)
-            print(delta_xyz)
         # Get the next observation
         obs = self.get_image()
 
@@ -106,9 +105,17 @@ class FrankaEnv:
                 skill_desc="GoToGripper",
             )
             T_ee_world = self.franka.get_pose()
-            T_ee_world.translation += [0, 0, 0.2]
-            self.franka.goto_pose(T_ee_world)
-            self.franka.reset_pose()
+            T_ee_world.translation += [0, 0, 0.3]
+            T_ee_world.translation = self.apply_workspace_limits(T_ee_world.translation)
+
+            self.franka.goto_pose(
+                T_ee_world,
+                duration=5,
+                force_thresholds=(15 * np.ones(6)).tolist(),
+                torque_thresholds=np.ones(7).tolist(),
+                block=True,
+            )
+            self.franka.reset_joints()
 
         obs = self.get_image()
         return obs
@@ -191,10 +198,9 @@ class FrankaPrimitivesEnv(FrankaEnv):
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
 
-    def reward(
-        self,
-    ):
-        return 0
+    def reward(self):
+        reward = 0
+        return reward
 
     def step(self, action):
 
@@ -204,10 +210,10 @@ class FrankaPrimitivesEnv(FrankaEnv):
         else:
             stats = self.act(action)
 
-        reward = 0
+        reward = self.reward()
         obs = self.get_image()
-        self.action_timestep += 1
         done = self.action_timestep == self.ep_length
+        self.action_timestep += 1
         info = {}
 
         return obs, reward, done, info
@@ -239,9 +245,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         self.set_ee_pose(desired_ee)
 
     def goto_pose(self, pose, grasp=True):
-        total_reward, total_success = 0, 0
-
-        # pose = self.apply_workspace_limits(pose)
+        pose = self.apply_workspace_limits(pose)
         print("pre action error: ", pose - self._eef_xpos)
 
         delta = pose - self._eef_xpos
@@ -273,23 +277,24 @@ class FrankaPrimitivesEnv(FrankaEnv):
         T_ee_world.translation += delta
         self.franka.goto_pose(
             T_ee_world,
-            duration=3,
-            force_thresholds=[1, 1, 1, 1, 1, 1],
-            torque_thresholds=[1, 1, 1, 1, 1, 1, 1],
+            duration=5,
+            force_thresholds=[15, 15, 15, 100, 100, 100],
+            torque_thresholds=np.ones(7).tolist(),
+            block=True,
         )
         r = self.reward()
-        total_reward += r
 
         print("post action error: ", pose - self._eef_xpos)
         print()
 
-        return np.array((total_reward, total_success))
+        return np.array((r, r))
 
     def close_gripper(self, d):
         d = d * 0.08
         d = np.clip(d, 0, 0.08)
         current_gripper_position = self.franka.get_gripper_width()
         desired = max(current_gripper_position - d, 0)
+        print("pre action error: ", desired - current_gripper_position)
         self.franka.goto_gripper(
             desired,
             grasp=False,
@@ -301,13 +306,15 @@ class FrankaPrimitivesEnv(FrankaEnv):
             ignore_errors=True,
             skill_desc="GoToGripper",
         )
-        return (0, 0)
+        print("post action error: ", desired - self.franka.get_gripper_width())
+        return (self.reward(), self.reward())
 
     def open_gripper(self, d):
         d = d * 0.08
         d = np.clip(d, 0, 0.08)
         current_gripper_position = self.franka.get_gripper_width()
         desired = min(current_gripper_position + d, 0.08)
+        print("pre action error: ", desired - current_gripper_position)
         self.franka.goto_gripper(
             desired,
             grasp=False,
@@ -319,7 +326,8 @@ class FrankaPrimitivesEnv(FrankaEnv):
             ignore_errors=True,
             skill_desc="GoToGripper",
         )
-        return (0, 0)
+        print("post action error: ", desired - self.franka.get_gripper_width())
+        return (self.reward(), self.reward())
 
     def top_grasp(self, zd):
         z_down, d = zd
@@ -412,6 +420,62 @@ class FrankaPrimitivesEnv(FrankaEnv):
         for idx, pn in self.primitive_idx_to_name.items():
             if pn == primitive_name:
                 return idx
+
+
+class DiceEnvWrapper(gym.Wrapper):
+    def __init__(self, env, divider_xpos):
+        gym.Wrapper.__init__(self, env)
+        self.divider_xpos = divider_xpos
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+    def get_dice_center(self):
+        img = self.obs_cam.get_image()[:, :, ::-1]
+        lowerBound = np.array([155, 25, 0])
+        upperBound = np.array([179, 255, 255])
+        img = cv2.resize(img, (340, 220))
+        imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(imgHSV, lowerBound, upperBound)
+        kernelOpen = np.ones((5, 5))
+        kernelClose = np.ones((20, 20))
+
+        maskOpen = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernelOpen)
+        maskClose = cv2.morphologyEx(maskOpen, cv2.MORPH_CLOSE, kernelClose)
+
+        maskFinal = maskClose
+        conts, h = cv2.findContours(
+            maskFinal.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+        )
+        largest_area = 0
+        for i in range(len(conts)):
+            x, y, w, h = cv2.boundingRect(conts[i])
+            largest_area = max(largest_area, w * h)
+        for i in range(len(conts)):
+            x, y, w, h = cv2.boundingRect(conts[i])
+            if w * h == largest_area:
+                return x + w / 2
+        return 0
+
+    def reset(self):
+        obs = self.env.reset()
+        self.reference_dice_center = self.get_dice_center()
+        return obs
+
+    def step(self, action):
+        o, r, d, i = self.env.step(action)
+        i["reference dice center"] = self.reference_dice_center
+        if d:
+            old_dice_center = self.reference_dice_center
+            self.reset()
+            # check if dice center switched sides
+            r = (old_dice_center > self.divider_xpos) != (
+                self.reference_dice_center > self.divider_xpos
+            )
+        dice_center = self.get_dice_center()
+        i["dice center"] = dice_center
+        print("dice center: ", dice_center)
+        return o, r, d, i
 
 
 def make_policy(env, use_raw_actions=True):
@@ -550,11 +614,33 @@ def test_raps(num_eps=10, actions_per_ep=5):
 
     print(f"RAPS time_per_ep {time_per_ep}")
 
+def test_dice_raps(num_eps=10, actions_per_ep=5):
+    env = FrankaPrimitivesEnv(ep_length=actions_per_ep, use_robot=True)
+    env.reset_action_space(
+        control_mode="primitives",
+        action_scale=1,
+        max_path_length=5,
+    )
+    env = DiceEnvWrapper(env, divider_xpos=175)
+    ptu.device = torch.device("cuda:0")
+    policy = make_policy(env, use_raw_actions=False)
+
+    total_time = 0
+    ep_times = []
+    for ep in range(num_eps):
+        print(f"Episode {ep}")
+        ep_time = run_rollout(env, policy)
+        print(f"ep time {ep_time}")
+        total_time += ep_time
+        ep_times.append(ep_time)
+
+    time_per_ep = np.mean(ep_times[1:])
+
+    print(f"RAPS time_per_ep {time_per_ep}")
+
 
 def main():
-
-    # test_baseline()
-    test_raps()
+    test_dice_raps()
     exit()
 
 
