@@ -95,13 +95,16 @@ cv_image = bridge.imgmsg_to_cv2(image_message, desired_encoding='passthrough')
 
 
 def main():
-    cam = RealsenseROSCamera()
+    cam = RealsenseROSCamera(camera_id=1)
     while True:
         font = cv2.FONT_HERSHEY_SIMPLEX
 
         img = cam.get_image()[:, :, ::-1]
-        lowerBound = np.array([155, 25, 0])
-        upperBound = np.array([179, 255, 255])
+        purple = [168, 127, 214]
+        higher = [255, 150, 255]
+        lower = [80, 100, 100]
+        lowerBound = np.array(lower)
+        upperBound = np.array(higher)
         img = cv2.resize(img, (340, 220))
         imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(imgHSV, lowerBound, upperBound)
@@ -127,6 +130,7 @@ def main():
                 cv2.putText(
                     img, "Die", (x, y + h), font, 1, (0, 255, 255), 1, cv2.LINE_AA
                 )
+                print(x + w / 2)
                 break
         cv2.imshow("mask", mask)
         cv2.imshow("cam", img)
@@ -134,7 +138,6 @@ def main():
         cv2.imshow("maskOpen", maskOpen)
 
         cv2.waitKey(10)
-        print(x + w / 2)
 
 
 if __name__ == "__main__":

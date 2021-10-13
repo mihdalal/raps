@@ -9,7 +9,7 @@ from rlkit.torch.model_based.dreamer.actor_models import ActorModel
 from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
 from frankapy import FrankaArm
-from ros_image import RealsenseROSCamera
+from rlkit.envs.ros_image import RealsenseROSCamera
 import rospy
 import cv2
 import gym
@@ -42,11 +42,11 @@ class FrankaEnv:
         self.observation_space = Box(
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
-
-        self.wkspace_total_low = np.array([0.19147676, -0.24988993, 0.11593331])
-        self.wkspace_total_high = np.array([0.48935749, 0.30219993, 0.6])
+        self.image_shape = (3, 64, 64)
+        self.wkspace_total_low = np.array([0.51047505, -0.18135069, -0.01110668])
+        self.wkspace_total_high = np.array([0.75970364, 0.1616499, 0.25562321])
         self.reward_range = (0, 1)
-        self.metadata={}
+        self.metadata = {}
 
     def get_image(self):
 
@@ -59,7 +59,13 @@ class FrankaEnv:
             time.sleep(1 / 30)
             return np.random.randint(low=0, high=255, size=64 * 64 * 3).astype(np.uint8)
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
 
         """The action is a vector of size 3."""
 
@@ -73,7 +79,7 @@ class FrankaEnv:
             # Treat the action as a delta
             T_ee_world = self.franka.get_pose()
             T_ee_world.translation += delta_xyz
-            self.franka.goto_pose(T_ee_world)
+            self.franka.goto_pose(T_ee_world, ignore_virtual_walls=True)
         # Get the next observation
         obs = self.get_image()
 
@@ -111,11 +117,26 @@ class FrankaEnv:
             self.franka.goto_pose(
                 T_ee_world,
                 duration=5,
-                force_thresholds=(15 * np.ones(6)).tolist(),
-                torque_thresholds=np.ones(7).tolist(),
+                force_thresholds=None,
+                torque_thresholds=None,
                 block=True,
+                ignore_virtual_walls=True,
             )
-            self.franka.reset_joints()
+            self.franka.goto_joints(
+                [
+                    0.08300033,
+                    0.18364033,
+                    -0.1270824,
+                    -2.00395608,
+                    0.01815664,
+                    2.21411985,
+                    0.77224278,
+                ],
+                duration=5,
+                skill_desc="",
+                block=True,
+                ignore_errors=True,
+            )
 
         obs = self.get_image()
         return obs
@@ -123,7 +144,7 @@ class FrankaEnv:
     def set_ee_pose(self, ee_pos_desired):
         T_ee_world = self.franka.get_pose()
         T_ee_world.translation = ee_pos_desired
-        self.franka.goto_pose(T_ee_world)
+        self.franka.goto_pose(T_ee_world, ignore_virtual_walls=True)
 
     def apply_workspace_limits(self, a):
         a = np.clip(a, self.wkspace_total_low, self.wkspace_total_high)
@@ -202,7 +223,13 @@ class FrankaPrimitivesEnv(FrankaEnv):
         reward = 0
         return reward
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
 
         if self.control_mode == "end_effector":
             return super().step(action)
@@ -277,10 +304,11 @@ class FrankaPrimitivesEnv(FrankaEnv):
         T_ee_world.translation += delta
         self.franka.goto_pose(
             T_ee_world,
-            duration=5,
+            duration=3,
             force_thresholds=[15, 15, 15, 100, 100, 100],
             torque_thresholds=np.ones(7).tolist(),
             block=True,
+            ignore_virtual_walls=True,
         )
         r = self.reward()
 
@@ -462,7 +490,13 @@ class DiceEnvWrapper(gym.Wrapper):
         self.reference_dice_center = self.get_dice_center()
         return obs
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
         o, r, d, i = self.env.step(action)
         i["reference dice center"] = self.reference_dice_center
         if d:
@@ -613,6 +647,7 @@ def test_raps(num_eps=10, actions_per_ep=5):
     time_per_ep = np.mean(ep_times[1:])
 
     print(f"RAPS time_per_ep {time_per_ep}")
+
 
 def test_dice_raps(num_eps=10, actions_per_ep=5):
     env = FrankaPrimitivesEnv(ep_length=actions_per_ep, use_robot=True)

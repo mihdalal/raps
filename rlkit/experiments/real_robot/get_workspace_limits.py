@@ -5,6 +5,7 @@ if __name__ == "__main__":
     franka = FrankaArm(init_node=True)
     T_ee_world = franka.get_pose()
     print(T_ee_world.translation)
+    print(franka.get_joints())
 
 # [ 0.48935749 -0.24988993  0.11593331]
 # [0.19147676 0.30219993 0.42498111]
