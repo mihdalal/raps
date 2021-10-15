@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=250,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e5),
+        replay_buffer_size=int(1e5),
         algorithm_kwargs=algorithm_kwargs,
         env_name="dice",
         use_raw_actions=False,
