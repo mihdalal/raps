@@ -95,7 +95,7 @@ cv_image = bridge.imgmsg_to_cv2(image_message, desired_encoding='passthrough')
 
 
 def main():
-    cam = RealsenseROSCamera(camera_id=1)
+    cam = RealsenseROSCamera(camera_id=2)
     while True:
         font = cv2.FONT_HERSHEY_SIMPLEX
 

@@ -30,22 +30,21 @@ class FrankaEnv:
 
         # Construct franka api here
         if self.use_robot:
-            print(f"Constructing camera")
-            rospy.init_node("robot")
+            print(f"Connecting to arm")
+            self.franka = FrankaArm()
+
+            print(f"Constructing cameras")
             self.obs_cam = RealsenseROSCamera(camera_id=1)
 
             self.reward_cam = RealsenseROSCamera(camera_id=2)
-
-            self.franka = FrankaArm(init_node=False)
-            print(f"connected to arm")
 
         self.action_space = Box(low=-1, high=1, dtype=np.float32, shape=(6,))
         self.observation_space = Box(
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
         self.image_shape = (3, 64, 64)
-        self.wkspace_total_low = np.array([0.37, -0.22, 0.12])
-        self.wkspace_total_high = np.array([0.6, 0.15, 0.3])
+        self.wkspace_total_low = np.array([0.22, -0.21, 0.1])
+        self.wkspace_total_high = np.array([0.58, 0.175, 0.2])
         self.reward_range = (0, 1)
         self.metadata = {}
 
@@ -115,27 +114,17 @@ class FrankaEnv:
             T_ee_world.translation += [0, 0, 0.3]
             T_ee_world.translation = self.apply_workspace_limits(T_ee_world.translation)
 
-            # self.franka.goto_pose(
-            #     T_ee_world,
-            #     duration=5,
-            #     force_thresholds=None,
-            #     torque_thresholds=None,
-            #     block=True,
-            #     ignore_virtual_walls=True,
-            #     ignore_errors=True,
-            #     use_impedance=False,
-            # )
             self.franka.goto_joints(
                 [
-                    2.52489039,
-                    0.25439553,
-                    -2.51675629,
-                    -2.40361441,
-                    0.18194526,
-                    2.19522062,
-                    0.68043776,
+                    8.93720187e-01,
+                    -6.78714680e-04,
+                    -5.20311067e-01,
+                    -2.59165060e00,
+                    -1.63030019e-01,
+                    2.57314849e00,
+                    -1.84242542e00,
                 ],
-                duration=2,
+                duration=1,
                 skill_desc="",
                 block=True,
                 ignore_errors=True,
@@ -307,13 +296,12 @@ class FrankaPrimitivesEnv(FrankaEnv):
         T_ee_world.translation += delta
         self.franka.goto_pose(
             T_ee_world,
-            duration=3,
+            duration=0.5,
             force_thresholds=[15, 15, 15, 100, 100, 100],
             torque_thresholds=np.ones(7).tolist(),
             block=True,
             ignore_virtual_walls=True,
             use_impedance=False,
-            # joint_impedances=FC.DEFAULT_JOINT_IMPEDANCES,
         )
         r = self.reward()
 
