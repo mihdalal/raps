@@ -132,13 +132,13 @@ class FrankaEnv:
 
             self.franka.goto_joints(
                 [
-                    0.79249497,
-                    0.17514637,
-                    -0.48099698,
-                    -2.36368314,
-                    0.18256195,
-                    2.55480444,
-                    0.96184119,
+                    1.17177064,
+                    0.32818274,
+                    -0.85465877,
+                    -2.32729758,
+                    0.34007144,
+                    2.5558805,
+                    0.80453143,
                 ],
                 duration=1.5,
                 skill_desc="",
@@ -166,13 +166,13 @@ class FrankaEnv:
 
             self.franka.goto_joints(
                 [
-                    0.79249497,
-                    0.17514637,
-                    -0.48099698,
-                    -2.36368314,
-                    0.18256195,
-                    2.55480444,
-                    0.96184119,
+                    1.17177064,
+                    0.32818274,
+                    -0.85465877,
+                    -2.32729758,
+                    0.34007144,
+                    2.5558805,
+                    0.80453143,
                 ],
                 duration=1.5,
                 skill_desc="",
@@ -267,7 +267,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-
+        self.action_timestep += 1
         if self.control_mode == "end_effector":
             return super().step(action)
 
@@ -277,7 +277,6 @@ class FrankaPrimitivesEnv(FrankaEnv):
         reward = self.reward()
         obs = self.get_image()
         done = self.action_timestep == self.max_path_length
-        self.action_timestep += 1
         info = {}
 
         return obs, reward, done, info
@@ -324,9 +323,11 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            if np.linalg.norm(delta) > .15:
+            if np.linalg.norm(delta) < 0.05:
+                duration = 0.5
+            elif np.linalg.norm(delta) > 0.15:
                 duration = 1.5
-                if np.linalg.norm(delta) > .3:
+                if np.linalg.norm(delta) > 0.3:
                     duration = 2
             else:
                 duration = 1
@@ -368,9 +369,11 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            if np.linalg.norm(delta) > .15:
+            if np.linalg.norm(delta) < 0.05:
+                duration = 0.5
+            elif np.linalg.norm(delta) > 0.15:
                 duration = 1.5
-                if np.linalg.norm(delta) > .3:
+                if np.linalg.norm(delta) > 0.3:
                     duration = 2
             else:
                 duration = 1
@@ -394,7 +397,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         if self.hardcode_gripper_actions:
             try:
                 self.franka.goto_gripper(
-                    .04,
+                    0.04,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -409,7 +412,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
                 ipdb.set_trace()
                 self.franka.goto_gripper(
-                    .04,
+                    0.04,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -460,7 +463,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         if self.hardcode_gripper_actions:
             try:
                 self.franka.goto_gripper(
-                    .08,
+                    0.08,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -475,7 +478,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
                 ipdb.set_trace()
                 self.franka.goto_gripper(
-                    .08,
+                    0.08,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -606,9 +609,10 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
 
 class DiceEnvWrapper(gym.Wrapper):
-    def __init__(self, env, divider_xpos):
+    def __init__(self, env, divider_xpos, one_sided=True):
         gym.Wrapper.__init__(self, env)
         self.divider_xpos = divider_xpos
+        self.one_sided = one_sided
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -661,18 +665,24 @@ class DiceEnvWrapper(gym.Wrapper):
             old_dice_center = self.reference_dice_center
             self.reset()
             # check if dice center switched sides
-            r = float(
-                (old_dice_center > self.divider_xpos)
-                != (self.reference_dice_center > self.divider_xpos)
-            )
+            if self.one_sided:
+                r = float(self.get_dice_center() < self.divider_xpos)
+            else:
+                r = float(
+                    (old_dice_center > self.divider_xpos)
+                    != (self.reference_dice_center > self.divider_xpos)
+                )
             print("SUCCESS", r > 0.0)
-            import ipdb
+            if r > 0.0:
+                import ipdb
 
-            ipdb.set_trace()  # reset the dice
+                ipdb.set_trace()  # reset the dice
+        # print("dice center: ", dice_center)
 
         dice_center = self.get_dice_center()
         i["dice center"] = dice_center
-        # print("dice center: ", dice_center)
+        if self.one_sided:
+            r = float(self.get_dice_center() < self.divider_xpos)
         return o, r, d, i
 
 

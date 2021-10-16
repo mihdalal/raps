@@ -7,6 +7,9 @@ import gtimer as gt
 from rlkit.core import eval_util, logger
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import DataCollector, PathCollector
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import (
+    save_replay_buffer,
+)
 
 
 def _get_epoch_timings():
@@ -266,6 +269,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
+            save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
+            exit()
         self.total_train_expl_time += time.time() - st
 
         for epoch in gt.timed_for(

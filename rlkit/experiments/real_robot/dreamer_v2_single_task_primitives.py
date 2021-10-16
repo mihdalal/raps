@@ -46,7 +46,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(1e5),
+        replay_buffer_size=int(2e4),
         algorithm_kwargs=algorithm_kwargs,
         env_name="dice",
         use_raw_actions=False,
@@ -110,6 +110,10 @@ if __name__ == "__main__":
         num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
+        load_from_path=False,
+        # models_path="/home/mdalal/research/raps/rlkit/data/10-16-test/10-16-test_2021_10_16_12_49_04_0000--s-94368",
+        # pkl_file_name='params.pkl',
+        # retrain_actor_and_vf=False,
     )
 
     search_space = {"env_name": [args.env]}
@@ -129,7 +133,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="last",
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],

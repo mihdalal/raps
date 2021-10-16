@@ -52,9 +52,15 @@ def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
                 null_state, null_acts, embed
             )
             reconstructions = ptu.zeros(
-                (4, algorithm.max_path_length, *algorithm.trainer.world_model.image_shape),
+                (
+                    4,
+                    algorithm.max_path_length,
+                    *algorithm.trainer.world_model.image_shape,
+                ),
             )
-            actions = ptu.zeros((4, algorithm.max_path_length, env.action_space.low.size))
+            actions = ptu.zeros(
+                (4, algorithm.max_path_length, env.action_space.low.size)
+            )
             for k in range(algorithm.max_path_length):
                 feat = algorithm.trainer.world_model.get_features(new_state)
                 action_dist = algorithm.trainer.actor(feat.detach())

@@ -193,6 +193,10 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
+    if variant.get("models_path", None):
+        replay_buffer = load_replay_buffer(replay_buffer, variant.get("models_path"))
+        algorithm.min_num_steps_before_training = 0
+        print("loaded replay buffer")
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_post_epoch_func)
     print("TRAINING")
@@ -200,3 +204,67 @@ def experiment(variant):
     algorithm.train()
     if variant.get("save_video", False):
         video_post_epoch_func(algorithm, -1)
+
+
+def save_replay_buffer(replay_buffer, path):
+    import h5py
+    import numpy as np
+
+    with h5py.File(path + "/replay_buffer.h5", "w") as hf:
+        hf.create_dataset(
+            "obs",
+            data=replay_buffer._observations,
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.create_dataset(
+            "actions",
+            data=replay_buffer._actions,
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.create_dataset(
+            "rewards",
+            data=replay_buffer._rewards,
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.create_dataset(
+            "terminals",
+            data=replay_buffer._terminals,
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.create_dataset(
+            "size",
+            data=np.array([replay_buffer._size]),
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.create_dataset(
+            "top",
+            data=np.array([replay_buffer._top]),
+            compression="gzip",
+            compression_opts=9,
+        )
+        hf.close()
+
+
+def load_replay_buffer(replay_buffer, path):
+    import h5py
+    import numpy as np
+
+    with h5py.File(path + "/replay_buffer.h5", "r") as hf:
+        obs = np.array(hf.get("obs"))
+        actions = np.array(hf.get("actions"))
+        rewards = np.array(hf.get("rewards"))
+        terminals = np.array(hf.get("terminals"))
+        size = np.array(hf.get("size"))[0]
+        top = np.array(hf.get("top"))[0]
+    replay_buffer._observations = obs
+    replay_buffer._actions = actions
+    replay_buffer._rewards = rewards
+    replay_buffer._terminals = terminals
+    replay_buffer._top = top
+    replay_buffer._size = size
+    return replay_buffer
