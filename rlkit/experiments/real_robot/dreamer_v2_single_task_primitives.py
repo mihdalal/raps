@@ -33,7 +33,7 @@ if __name__ == "__main__":
     else:
         algorithm_kwargs = dict(
             num_epochs=100,
-            num_eval_steps_per_epoch=30,
+            num_eval_steps_per_epoch=18,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         use_raw_actions=False,
         env_suite="real_robot",
         pass_render_kwargs=True,
-        save_video=False,
+        save_video=True,
         env_kwargs=dict(
             control_mode="primitives",
             action_scale=1,

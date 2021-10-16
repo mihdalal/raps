@@ -100,15 +100,11 @@ def make_base_kitchen_env(env_class, env_kwargs):
     return env
 
 
-def make_real_robot_env():
+def make_real_robot_env(env_kwargs):
     from rlkit.envs.raps import DiceEnvWrapper, FrankaPrimitivesEnv
 
-    env = FrankaPrimitivesEnv(ep_length=5, use_robot=True)
-    env.reset_action_space(
-        control_mode="primitives",
-        action_scale=1,
-        max_path_length=5,
-    )
+    env = FrankaPrimitivesEnv()
+    env.reset_action_space(**env_kwargs)
     env = DiceEnvWrapper(env, divider_xpos=175)
     return env
 
@@ -139,7 +135,7 @@ def make_env(env_suite, env_name, env_kwargs):
         del env_kwargs_new["image_kwargs"]
 
     if env_suite == "real_robot":
-        env = make_real_robot_env()
+        env = make_real_robot_env(env_kwargs_new)
     elif env_suite == "kitchen":
         env = make_base_kitchen_env(env_name, env_kwargs_new)
     elif env_suite == "metaworld":

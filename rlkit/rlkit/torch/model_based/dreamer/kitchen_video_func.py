@@ -11,104 +11,105 @@ from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 
 def video_post_epoch_func(algorithm, epoch):
     print(epoch)
-    try:
-        video_post_epoch_func_(
-            algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
-        )
-        video_post_epoch_func_(
-            algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
-        )
-    except Exception:
-        pass
-    # imagination_post_epoch_func(
-    #     algorithm,
-    #     algorithm.eval_env,
-    #     epoch,
-    #     algorithm.eval_data_collector._policy,
-    #     mode="eval",
-    # )
+    # try:
+    #     video_post_epoch_func_(
+    #         algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
+    #     )
+    #     video_post_epoch_func_(
+    #         algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
+    #     )
+    # except Exception:
+    #     pass
+    imagination_post_epoch_func(
+        algorithm,
+        algorithm.eval_env,
+        epoch,
+        algorithm.eval_data_collector._policy,
+        mode="eval",
+    )
 
-    # imagination_post_epoch_func(
-    #     algorithm,
-    #     algorithm.eval_env,
-    #     epoch,
-    #     algorithm.expl_data_collector._policy,
-    #     mode="expl",
-    # )
+    imagination_post_epoch_func(
+        algorithm,
+        algorithm.eval_env,
+        epoch,
+        algorithm.expl_data_collector._policy,
+        mode="expl",
+    )
 
 
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
-    if epoch == -1 or epoch % 100 == 0:
-        null_state = algorithm.trainer.world_model.initial(4)
-        null_acts = ptu.zeros((4, env.action_space.low.size))
-        reset_obs = []
-        for i in range(4):
-            reset_obs.append(env.reset())
-        reset_obs = ptu.from_numpy(np.concatenate(reset_obs))
-        embed = algorithm.trainer.world_model.encode(reset_obs)
-        new_state, _ = algorithm.trainer.world_model.obs_step(
-            null_state, null_acts, embed
-        )
-        reconstructions = ptu.zeros(
-            (4, algorithm.max_path_length, *algorithm.trainer.world_model.image_shape),
-        )
-        actions = ptu.zeros((4, algorithm.max_path_length, env.action_space.low.size))
-        for k in range(algorithm.max_path_length):
-            feat = algorithm.trainer.world_model.get_features(new_state)
-            action_dist = algorithm.trainer.actor(feat.detach())
-            if type(algorithm.trainer.actor) == ConditionalActorModel:
-                action, _ = action_dist.rsample_and_log_prob()
-            else:
-                action = action_dist.rsample()
-            new_state = algorithm.trainer.world_model.action_step(new_state, action)
-            new_img = algorithm.trainer.world_model.decode(
-                algorithm.trainer.world_model.get_features(new_state)
+    with torch.cuda.amp.autocast():
+        if epoch == -1 or epoch % 10 == 0:
+            null_state = algorithm.trainer.world_model.initial(4)
+            null_acts = ptu.zeros((4, env.action_space.low.size))
+            reset_obs = []
+            for i in range(4):
+                reset_obs.append(env.reset())
+            reset_obs = ptu.from_numpy(np.concatenate(reset_obs))
+            embed = algorithm.trainer.world_model.encode(reset_obs)
+            new_state, _ = algorithm.trainer.world_model.obs_step(
+                null_state, null_acts, embed
             )
-            reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
-            actions[:, k : k + 1] = action.unsqueeze(1)
-        obs = np.zeros(
-            (4, algorithm.max_path_length, env.observation_space.shape[0]),
-            dtype=np.uint8,
-        )
-        for i in range(4):
-            env.reset()
-            o = env.reset()
-            policy.reset(o)
-            for j in range(algorithm.max_path_length):
-                o, r, d, _ = env.step(
-                    actions[i, j].detach().cpu().numpy(),
+            reconstructions = ptu.zeros(
+                (4, algorithm.max_path_length, *algorithm.trainer.world_model.image_shape),
+            )
+            actions = ptu.zeros((4, algorithm.max_path_length, env.action_space.low.size))
+            for k in range(algorithm.max_path_length):
+                feat = algorithm.trainer.world_model.get_features(new_state)
+                action_dist = algorithm.trainer.actor(feat.detach())
+                if type(algorithm.trainer.actor) == ConditionalActorModel:
+                    action, _ = action_dist.rsample_and_log_prob()
+                else:
+                    action = action_dist.rsample()
+                new_state = algorithm.trainer.world_model.action_step(new_state, action)
+                new_img = algorithm.trainer.world_model.decode(
+                    algorithm.trainer.world_model.get_features(new_state)
                 )
-                obs[i, j] = o
-
-        reconstructions = (
-            torch.clamp(
-                reconstructions.permute(0, 1, 3, 4, 2) + 0.5,
-                0,
-                1,
+                reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
+                actions[:, k : k + 1] = action.unsqueeze(1)
+            obs = np.zeros(
+                (4, algorithm.max_path_length, env.observation_space.shape[0]),
+                dtype=np.uint8,
             )
-            * 255.0
-        )
-        reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
-        obs = ptu.from_numpy(obs)
+            for i in range(4):
+                env.reset()
+                o = env.reset()
+                policy.reset(o)
+                for j in range(algorithm.max_path_length):
+                    o, r, d, _ = env.step(
+                        actions[i, j].detach().cpu().numpy(),
+                    )
+                    obs[i, j] = o
 
-        obs_np = ptu.get_numpy(
-            obs[:, :, : 64 * 64 * 3]
-            .reshape(4, algorithm.max_path_length, 3, 64, 64)
-            .permute(0, 1, 3, 4, 2)
-        ).astype(np.uint8)
-        file_path = osp.join(
-            logger.get_snapshot_dir(),
-            mode + "_" + str(epoch) + "_imagination_reconstructions.png",
-        )
-        im = np.zeros((128 * 4, algorithm.max_path_length * 64, 3), dtype=np.uint8)
-        for i in range(4):
-            for j in range(algorithm.max_path_length):
-                im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
-                im[
-                    128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
-                ] = reconstructions[i, j]
-        cv2.imwrite(file_path, im)
+            reconstructions = (
+                torch.clamp(
+                    reconstructions.permute(0, 1, 3, 4, 2) + 0.5,
+                    0,
+                    1,
+                )
+                * 255.0
+            )
+            reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
+            obs = ptu.from_numpy(obs)
+
+            obs_np = ptu.get_numpy(
+                obs[:, :, : 64 * 64 * 3]
+                .reshape(4, algorithm.max_path_length, 3, 64, 64)
+                .permute(0, 1, 3, 4, 2)
+            ).astype(np.uint8)
+            file_path = osp.join(
+                logger.get_snapshot_dir(),
+                mode + "_" + str(epoch) + "_imagination_reconstructions.png",
+            )
+            im = np.zeros((128 * 4, algorithm.max_path_length * 64, 3), dtype=np.uint8)
+            for i in range(4):
+                for j in range(algorithm.max_path_length):
+                    im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+                    im[
+                        128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
+                    ] = reconstructions[i, j]
+            cv2.imwrite(file_path, im)
 
 
 @torch.no_grad()
