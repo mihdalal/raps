@@ -169,6 +169,10 @@ def experiment(variant):
         use_batch_length=use_batch_length,
         batch_length=50,
     )
+    if variant.get("models_path", None):
+        replay_buffer = load_replay_buffer(replay_buffer, variant.get("models_path"))
+        variant["algorithm_kwargs"]['min_num_steps_before_training'] = 0
+        print("loaded replay buffer")
     trainer_class_name = variant.get("algorithm", "DreamerV2")
     if trainer_class_name == "DreamerV2":
         trainer_class = DreamerV2Trainer
@@ -193,10 +197,7 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    if variant.get("models_path", None):
-        replay_buffer = load_replay_buffer(replay_buffer, variant.get("models_path"))
-        algorithm.min_num_steps_before_training = 0
-        print("loaded replay buffer")
+
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_post_epoch_func)
     print("TRAINING")

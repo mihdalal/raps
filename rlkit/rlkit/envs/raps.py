@@ -43,8 +43,8 @@ class FrankaEnv:
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
         self.image_shape = (3, 64, 64)
-        self.wkspace_total_low = np.array([0.35, -0.2, 0.1])
-        self.wkspace_total_high = np.array([0.65, 0.23, 0.2])
+        self.wkspace_total_low = np.array([0.3, -0.2, 0.1])
+        self.wkspace_total_high = np.array([0.63, 0.23, 0.25])
         self.reward_range = (0, 1)
         self.metadata = {}
 
@@ -127,14 +127,23 @@ class FrankaEnv:
                 skill_desc="GoToGripper",
             )
             self.franka.goto_joints(
+                # [
+                #     0.08151406,
+                #     -0.22787109,
+                #     0.37234701,
+                #     -2.83323464,
+                #     0.14981936,
+                #     2.62942644,
+                #     1.07388106,
+                # ],
                 [
-                    0.08151406,
-                    -0.22787109,
-                    0.37234701,
-                    -2.83323464,
-                    0.14981936,
-                    2.62942644,
-                    1.07388106,
+                    0.00632841,
+                    0.07643715,
+                    0.31071674,
+                    -2.43213159,
+                    -0.09181293,
+                    2.50857672,
+                    1.13996233,
                 ],
                 duration=2,
                 skill_desc="",
@@ -159,13 +168,13 @@ class FrankaEnv:
             )
             self.franka.goto_joints(
                 [
-                    0.08151406,
-                    -0.22787109,
-                    0.37234701,
-                    -2.83323464,
-                    0.14981936,
-                    2.62942644,
-                    1.07388106,
+                    0.00632841,
+                    0.07643715,
+                    0.31071674,
+                    -2.43213159,
+                    -0.09181293,
+                    2.50857672,
+                    1.13996233,
                 ],
                 duration=2,
                 skill_desc="",
@@ -319,19 +328,11 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            # if np.linalg.norm(delta) < 0.05:
-            #     duration = 0.5
-            # elif np.linalg.norm(delta) > 0.15:
-            #     duration = 1.5
-            #     if np.linalg.norm(delta) > 0.3:
-            #         duration = 2
-            # else:
-            #     duration = 1
-            duration = 2
+            duration = 1
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
-                force_thresholds=[20, 20, 20, 100, 100, 100],
+                force_thresholds=[15, 15, 15, 100, 100, 100],
                 torque_thresholds=np.ones(7).tolist(),
                 block=True,
                 ignore_virtual_walls=True,
@@ -354,19 +355,11 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            # if np.linalg.norm(delta) < 0.05:
-            #     duration = 0.5
-            # elif np.linalg.norm(delta) > 0.15:
-            #     duration = 1.5
-            #     if np.linalg.norm(delta) > 0.3:
-            #         duration = 2
-            # else:
-            #     duration = 1
-            duration = 2
+            duration = 1
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
-                force_thresholds=[20, 20, 20, 100, 100, 100],
+                force_thresholds=[15, 15, 15, 100, 100, 100],
                 torque_thresholds=np.ones(7).tolist(),
                 block=True,
                 ignore_virtual_walls=True,
@@ -602,10 +595,17 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
 
 class DiceEnvWrapper(gym.Wrapper):
-    def __init__(self, env, divider_xpos, one_sided=True):
+    def __init__(
+        self,
+        env,
+        divider_xpos,
+        one_sided=True,
+        dense=False,
+    ):
         gym.Wrapper.__init__(self, env)
         self.divider_xpos = divider_xpos
         self.one_sided = one_sided
+        self.dense = dense
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -621,7 +621,7 @@ class DiceEnvWrapper(gym.Wrapper):
         imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(imgHSV, lowerBound, upperBound)
         kernelOpen = np.ones((5, 5))
-        kernelClose = np.ones((20, 20))
+        kernelClose = np.ones((15, 20))
 
         maskOpen = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernelOpen)
         maskClose = cv2.morphologyEx(maskOpen, cv2.MORPH_CLOSE, kernelClose)
@@ -645,6 +645,30 @@ class DiceEnvWrapper(gym.Wrapper):
         self.reference_dice_center = self.get_dice_center()
         return obs
 
+    def reward(self):
+        dice_center = self.get_dice_center()
+        if dice_center > 0:
+            if self.one_sided:
+                if self.dense:
+                    if self.dice_center > self.divider_xpos:
+                        r = -dice_center/340
+                    else:
+                        r = float(dice_center < self.divider_xpos)
+                else:
+                    r = float(dice_center < self.divider_xpos)
+            else:
+                # check if dice center switched sides
+                r = float(
+                    (self.reference_dice_center > self.divider_xpos)
+                    != (dice_center > self.divider_xpos)
+                )
+        else:
+            if self.dense:
+                return -1
+            else:
+                return 0
+        return r
+
     def step(
         self,
         action,
@@ -655,18 +679,35 @@ class DiceEnvWrapper(gym.Wrapper):
         o, r, d, i = self.env.step(action)
         i["reference dice center"] = self.reference_dice_center
         if d:
-            old_dice_center = self.reference_dice_center
-            self.reset()
-            # check if dice center switched sides
-            dice_center = self.get_dice_center()
-            if self.one_sided:
-                if dice_center > 0:
-                    r = float(dice_center < self.divider_xpos)
-            else:
-                r = float(
-                    (old_dice_center > self.divider_xpos)
-                    != (self.reference_dice_center > self.divider_xpos)
+            T_ee_world = self.franka.get_pose()
+            T_ee_world.translation += [-0.1, 0, 0.2]
+            T_ee_world.translation = self.apply_workspace_limits(T_ee_world.translation)
+            duration = 1
+            try:
+                self.franka.goto_pose(
+                    T_ee_world,
+                    duration=duration,
+                    force_thresholds=[15, 15, 15, 100, 100, 100],
+                    torque_thresholds=np.ones(7).tolist(),
+                    block=True,
+                    ignore_virtual_walls=True,
+                    use_impedance=False,
                 )
+            except:
+                import ipdb
+
+                ipdb.set_trace()
+                self.franka.goto_pose(
+                    T_ee_world,
+                    duration=duration,
+                    force_thresholds=[15, 15, 15, 100, 100, 100],
+                    torque_thresholds=np.ones(7).tolist(),
+                    block=True,
+                    ignore_virtual_walls=True,
+                    use_impedance=False,
+                )
+            r = self.reward()
+
             if r > 0.0:
                 print("SUCCESS", r > 0.0)
                 import ipdb
@@ -676,8 +717,7 @@ class DiceEnvWrapper(gym.Wrapper):
 
         dice_center = self.get_dice_center()
         i["dice center"] = dice_center
-        if self.one_sided:
-            r = float(self.get_dice_center() < self.divider_xpos)
+        r = self.reward()
         return o, r, d, i
 
 
