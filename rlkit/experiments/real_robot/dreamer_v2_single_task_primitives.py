@@ -21,12 +21,12 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=1,
             num_eval_steps_per_epoch=10,
-            num_expl_steps_per_train_loop=50,
+            num_expl_steps_per_train_loop=10,
             min_num_steps_before_training=10,
-            num_pretrain_steps=100,
+            num_pretrain_steps=1,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=30,
+            batch_size=10,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -34,8 +34,8 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=100,
             num_eval_steps_per_epoch=18,
-            min_num_steps_before_training=2500,
-            num_pretrain_steps=100,
+            min_num_steps_before_training=5000,
+            num_pretrain_steps=10000,
             max_path_length=5,
             batch_size=417,
             num_expl_steps_per_train_loop=30,
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         save_video=True,
         env_kwargs=dict(
             control_mode="primitives",
-            action_scale=1,
+            action_scale=0.4,
             max_path_length=5,
             usage_kwargs=dict(
                 use_dm_backend=True,
@@ -111,9 +111,9 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         load_from_path=False,
-        models_path="/home/mdalal/research/raps/rlkit/data/10-16-collect-random-model-data/10-16-collect_random_model_data_2021_10_16_15_25_09_0000--s-53232",
+        # models_path="/home/mdalal/research/raps/rlkit/data/10-16-collect-random-model-data/10-16-collect_random_model_data_2021_10_16_15_25_09_0000--s-53232",
         # pkl_file_name='params.pkl',
-        # retrain_actor_and_vf=False,
+        # retrain_actor_and_vf=True,
     )
 
     search_space = {"env_name": [args.env]}
@@ -133,7 +133,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="last",
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],

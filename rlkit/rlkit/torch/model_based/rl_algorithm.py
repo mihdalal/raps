@@ -86,6 +86,12 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             snapshot["replay_buffer/" + k] = v
         return snapshot
 
+    def _get_network_epoch(self):
+        snapshot = {}
+        for k, v in self.trainer.get_snapshot().items():
+            snapshot["trainer/" + k] = v
+        return snapshot
+
     def _log_wandb(self, d, prefix, epoch):
         updated_d = {}
         for k, v in d.items():
@@ -268,7 +274,12 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 runtime_policy=self.pretrain_policy,
             )
             self.replay_buffer.add_paths(init_expl_paths)
-            self.expl_data_collector.end_epoch(-1)
+            self.training_mode(True)
+            for train_step in range(self.num_pretrain_steps):
+                train_data = self.replay_buffer.random_batch(self.batch_size)
+                self.trainer.pretrain(train_data)
+            snapshot = self._get_snapshot()
+            logger.save_itr_params(-1, snapshot)
             save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
             exit()
         self.total_train_expl_time += time.time() - st
@@ -284,10 +295,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             gt.stamp("evaluation sampling")
             st = time.time()
             for train_loop in range(self.num_train_loops_per_epoch):
-                if epoch == 0 and train_loop == 0:
-                    num_train_steps = self.num_pretrain_steps
-                else:
-                    num_train_steps = self.num_trains_per_train_loop
+                num_train_steps = self.num_trains_per_train_loop
                 self.training_mode(True)
                 for train_step in range(num_train_steps):
                     train_data = self.replay_buffer.random_batch(self.batch_size)

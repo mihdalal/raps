@@ -650,8 +650,8 @@ class DiceEnvWrapper(gym.Wrapper):
         if dice_center > 0:
             if self.one_sided:
                 if self.dense:
-                    if self.dice_center > self.divider_xpos:
-                        r = -dice_center/340
+                    if dice_center > self.divider_xpos:
+                        r = -dice_center / 340
                     else:
                         r = float(dice_center < self.divider_xpos)
                 else:
@@ -679,32 +679,42 @@ class DiceEnvWrapper(gym.Wrapper):
         o, r, d, i = self.env.step(action)
         i["reference dice center"] = self.reference_dice_center
         if d:
-            T_ee_world = self.franka.get_pose()
-            T_ee_world.translation += [-0.1, 0, 0.2]
-            T_ee_world.translation = self.apply_workspace_limits(T_ee_world.translation)
-            duration = 1
             try:
-                self.franka.goto_pose(
-                    T_ee_world,
-                    duration=duration,
+                self.franka.goto_joints(
+                    [
+                        0.01451966,
+                        -0.76119473,
+                        0.51129723,
+                        -2.64644237,
+                        0.3810041,
+                        2.03545964,
+                        1.06605229,
+                    ],
+                    duration=2,
                     force_thresholds=[15, 15, 15, 100, 100, 100],
                     torque_thresholds=np.ones(7).tolist(),
                     block=True,
                     ignore_virtual_walls=True,
-                    use_impedance=False,
                 )
             except:
                 import ipdb
 
                 ipdb.set_trace()
-                self.franka.goto_pose(
-                    T_ee_world,
-                    duration=duration,
+                self.franka.goto_joints(
+                    [
+                        0.01451966,
+                        -0.76119473,
+                        0.51129723,
+                        -2.64644237,
+                        0.3810041,
+                        2.03545964,
+                        1.06605229,
+                    ],
+                    duration=2,
                     force_thresholds=[15, 15, 15, 100, 100, 100],
                     torque_thresholds=np.ones(7).tolist(),
                     block=True,
                     ignore_virtual_walls=True,
-                    use_impedance=False,
                 )
             r = self.reward()
 
@@ -713,11 +723,11 @@ class DiceEnvWrapper(gym.Wrapper):
                 import ipdb
 
                 ipdb.set_trace()  # reset the dice
+        else:
+            r = self.reward()
         # print("dice center: ", dice_center)
-
         dice_center = self.get_dice_center()
         i["dice center"] = dice_center
-        r = self.reward()
         return o, r, d, i
 
 

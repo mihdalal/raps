@@ -95,7 +95,6 @@ def experiment(variant):
             action_dim,
             image_shape=eval_envs[0].image_shape,
             **variant["model_kwargs"],
-            env=eval_envs[0],
         )
     if variant.get("retrain_actor_and_vf", True):
         actor = actor_model_class(
@@ -171,7 +170,7 @@ def experiment(variant):
     )
     if variant.get("models_path", None):
         replay_buffer = load_replay_buffer(replay_buffer, variant.get("models_path"))
-        variant["algorithm_kwargs"]['min_num_steps_before_training'] = 0
+        variant["algorithm_kwargs"]["min_num_steps_before_training"] = 0
         print("loaded replay buffer")
     trainer_class_name = variant.get("algorithm", "DreamerV2")
     if trainer_class_name == "DreamerV2":

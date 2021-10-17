@@ -14,6 +14,7 @@ from rlkit.torch.model_based.dreamer.utils import (
     schedule,
 )
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
+from rlkit.torch.core import np_to_pytorch_batch
 
 DreamerLosses = namedtuple(
     "DreamerLosses",
@@ -722,3 +723,55 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
     def compute_loss(self, batch, skip_statistics):
         pass
+
+    def pretrain(self, batch):
+        batch = np_to_pytorch_batch(batch)
+        self.train_from_torch(batch)
+        rewards = batch["rewards"] * self.reward_scale
+        terminals = batch["terminals"]
+        obs = batch["observations"]
+        actions = batch["actions"]
+        """
+        World Model Loss
+        """
+        with torch.cuda.amp.autocast():
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+            ) = self.world_model(obs, actions)
+            obs = obs.transpose(1, 0).reshape(-1, np.prod(self.image_shape))
+            rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+            terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
+            (
+                world_model_loss,
+                div,
+                image_pred_loss,
+                reward_pred_loss,
+                transition_loss,
+                entropy_loss,
+                pred_discount_loss,
+            ) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                prior,
+                post,
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                obs,
+                rewards,
+                terminals,
+            )
+
+        self.update_network(
+            self.world_model,
+            self.world_model_optimizer,
+            world_model_loss,
+            self.world_model_gradient_clip,
+        )

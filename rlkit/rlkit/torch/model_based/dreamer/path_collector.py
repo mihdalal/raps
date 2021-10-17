@@ -3,6 +3,7 @@ from collections import OrderedDict, deque
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.samplers.data_collector.base import PathCollector
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
+from tqdm import tqdm
 
 
 class VecMdpPathCollector(PathCollector):
@@ -43,7 +44,7 @@ class VecMdpPathCollector(PathCollector):
     ):
         paths = []
         num_steps_collected = 0
-        while num_steps_collected < num_steps:
+        for _ in tqdm(range(0, num_steps, (max_path_length + 1) * self._env.n_envs)):
             if not runtime_policy:
                 runtime_policy = self._policy
             path = self._rollout_fn(
