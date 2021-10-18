@@ -84,7 +84,7 @@ def experiment(variant):
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
         filename = variant["models_path"] + variant["pkl_file_name"]
-        print(filename)
+        print('loaded models from: %s' % filename)
         data = torch.load(filename)
         actor = data["trainer/actor"]
         vf = data["trainer/vf"]
@@ -169,7 +169,7 @@ def experiment(variant):
         batch_length=50,
     )
     if variant.get("models_path", None):
-        replay_buffer = load_replay_buffer(replay_buffer, variant.get("models_path"))
+        replay_buffer = load_replay_buffer(replay_buffer, variant.get("replay_path"))
         variant["algorithm_kwargs"]["min_num_steps_before_training"] = 0
         print("loaded replay buffer")
     trainer_class_name = variant.get("algorithm", "DreamerV2")

@@ -34,8 +34,8 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=100,
             num_eval_steps_per_epoch=18,
-            min_num_steps_before_training=5000,
-            num_pretrain_steps=10000,
+            min_num_steps_before_training=2500,
+            num_pretrain_steps=0,
             max_path_length=5,
             batch_size=417,
             num_expl_steps_per_train_loop=30,
@@ -110,10 +110,10 @@ if __name__ == "__main__":
         num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
-        load_from_path=False,
-        # models_path="/home/mdalal/research/raps/rlkit/data/10-16-collect-random-model-data/10-16-collect_random_model_data_2021_10_16_15_25_09_0000--s-53232",
-        # pkl_file_name='params.pkl',
-        # retrain_actor_and_vf=True,
+        load_from_path=True,
+        models_path="/home/mdalal/research/raps/rlkit/data/10-17-run-robot-sparse/10-17-run_robot_sparse_2021_10_17_19_15_40_0000--s-25811/",
+        replay_path="/home/mdalal/research/raps/rlkit/data/10-17-collect-random-model-data-sparse/10-17-collect_random_model_data_sparse_2021_10_17_16_08_52_0000--s-83917",
+        pkl_file_name='params.pkl',
     )
 
     search_space = {"env_name": [args.env]}

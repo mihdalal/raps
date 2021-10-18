@@ -10,6 +10,7 @@ from rlkit.samplers.data_collector import DataCollector, PathCollector
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import (
     save_replay_buffer,
 )
+from tqdm import tqdm
 
 
 def _get_epoch_timings():
@@ -274,14 +275,17 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 runtime_policy=self.pretrain_policy,
             )
             self.replay_buffer.add_paths(init_expl_paths)
+            save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
             self.training_mode(True)
-            for train_step in range(self.num_pretrain_steps):
+            for train_step in tqdm(range(self.num_pretrain_steps)):
                 train_data = self.replay_buffer.random_batch(self.batch_size)
                 self.trainer.pretrain(train_data)
             snapshot = self._get_snapshot()
             logger.save_itr_params(-1, snapshot)
-            save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
             exit()
+        for train_step in tqdm(range(self.num_pretrain_steps)):
+            train_data = self.replay_buffer.random_batch(self.batch_size)
+            self.trainer.pretrain(train_data)
         self.total_train_expl_time += time.time() - st
 
         for epoch in gt.timed_for(
@@ -294,10 +298,10 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             gt.stamp("evaluation sampling")
             st = time.time()
-            for train_loop in range(self.num_train_loops_per_epoch):
+            for train_loop in tqdm(range(self.num_train_loops_per_epoch)):
                 num_train_steps = self.num_trains_per_train_loop
                 self.training_mode(True)
-                for train_step in range(num_train_steps):
+                for train_step in tqdm(range(num_train_steps)):
                     train_data = self.replay_buffer.random_batch(self.batch_size)
                     self.trainer.train(train_data)
                 gt.stamp("training", unique=False)

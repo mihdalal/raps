@@ -726,7 +726,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
     def pretrain(self, batch):
         batch = np_to_pytorch_batch(batch)
-        self.train_from_torch(batch)
         rewards = batch["rewards"] * self.reward_scale
         terminals = batch["terminals"]
         obs = batch["observations"]
@@ -775,3 +774,4 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             world_model_loss,
             self.world_model_gradient_clip,
         )
+        self.scaler.update()

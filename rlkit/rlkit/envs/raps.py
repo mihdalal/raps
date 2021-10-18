@@ -145,7 +145,7 @@ class FrankaEnv:
                     2.50857672,
                     1.13996233,
                 ],
-                duration=2,
+                duration=5,
                 skill_desc="",
                 block=True,
                 ignore_virtual_walls=True,
@@ -176,12 +176,11 @@ class FrankaEnv:
                     2.50857672,
                     1.13996233,
                 ],
-                duration=2,
+                duration=5,
                 skill_desc="",
                 block=True,
                 ignore_errors=True,
             )
-
         obs = self.get_image()
         return obs
 
@@ -680,42 +679,12 @@ class DiceEnvWrapper(gym.Wrapper):
         i["reference dice center"] = self.reference_dice_center
         if d:
             try:
-                self.franka.goto_joints(
-                    [
-                        0.01451966,
-                        -0.76119473,
-                        0.51129723,
-                        -2.64644237,
-                        0.3810041,
-                        2.03545964,
-                        1.06605229,
-                    ],
-                    duration=2,
-                    force_thresholds=[15, 15, 15, 100, 100, 100],
-                    torque_thresholds=np.ones(7).tolist(),
-                    block=True,
-                    ignore_virtual_walls=True,
-                )
+                self.goto_pose([0.3, .23, .25])
             except:
                 import ipdb
 
                 ipdb.set_trace()
-                self.franka.goto_joints(
-                    [
-                        0.01451966,
-                        -0.76119473,
-                        0.51129723,
-                        -2.64644237,
-                        0.3810041,
-                        2.03545964,
-                        1.06605229,
-                    ],
-                    duration=2,
-                    force_thresholds=[15, 15, 15, 100, 100, 100],
-                    torque_thresholds=np.ones(7).tolist(),
-                    block=True,
-                    ignore_virtual_walls=True,
-                )
+                self.goto_pose([0.3, .23, .25])
             r = self.reward()
 
             if r > 0.0:
@@ -894,9 +863,18 @@ def test_dice_raps(num_eps=10):
 
     print(f"RAPS time_per_ep {time_per_ep}")
 
+def test_grasp():
+    env = FrankaPrimitivesEnv()
+    env.reset_action_space(
+        control_mode="primitives",
+        action_scale=1,
+        max_path_length=5,
+    )
+    env = DiceEnvWrapper(env, divider_xpos=175)
+    import ipdb; ipdb.set_trace()
 
 def main():
-    test_dice_raps()
+    test_grasp()
     exit()
 
 
