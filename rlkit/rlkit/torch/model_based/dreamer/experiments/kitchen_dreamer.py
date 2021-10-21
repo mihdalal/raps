@@ -84,7 +84,7 @@ def experiment(variant):
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
         filename = variant["models_path"] + variant["pkl_file_name"]
-        print('loaded models from: %s' % filename)
+        print("loaded models from: %s" % filename)
         data = torch.load(filename)
         actor = data["trainer/actor"]
         vf = data["trainer/vf"]

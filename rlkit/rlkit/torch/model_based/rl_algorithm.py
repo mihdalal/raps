@@ -276,16 +276,11 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             self.replay_buffer.add_paths(init_expl_paths)
             save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
-            self.training_mode(True)
-            for train_step in tqdm(range(self.num_pretrain_steps)):
-                train_data = self.replay_buffer.random_batch(self.batch_size)
-                self.trainer.pretrain(train_data)
-            snapshot = self._get_snapshot()
-            logger.save_itr_params(-1, snapshot)
-            exit()
+        self.training_mode(True)
         for train_step in tqdm(range(self.num_pretrain_steps)):
             train_data = self.replay_buffer.random_batch(self.batch_size)
             self.trainer.pretrain(train_data)
+        self.training_mode(False)
         self.total_train_expl_time += time.time() - st
 
         for epoch in gt.timed_for(

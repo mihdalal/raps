@@ -110,10 +110,11 @@ if __name__ == "__main__":
         num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
-        load_from_path=True,
-        models_path="/home/mdalal/research/raps/rlkit/data/10-17-run-robot-sparse/10-17-run_robot_sparse_2021_10_17_19_15_40_0000--s-25811/",
-        replay_path="/home/mdalal/research/raps/rlkit/data/10-17-collect-random-model-data-sparse/10-17-collect_random_model_data_sparse_2021_10_17_16_08_52_0000--s-83917",
-        pkl_file_name='params.pkl',
+        # load_from_path=True,
+        # models_path="/home/mdalal/research/raps/rlkit/data/10-17-run-robot-sparse/10-17-run_robot_sparse_2021_10_17_19_15_40_0000--s-25811/",
+        # models_path="/home/mdalal/research/raps/rlkit/data/10-18-run-robot-sparse-continue-1/10-18-run_robot_sparse_continue_1_2021_10_18_15_46_23_0000--s-38358/",
+        # replay_path="/home/mdalal/research/raps/rlkit/data/10-17-collect-random-model-data-sparse/10-17-collect_random_model_data_sparse_2021_10_17_16_08_52_0000--s-83917",
+        # pkl_file_name="params.pkl",
     )
 
     search_space = {"env_name": [args.env]}

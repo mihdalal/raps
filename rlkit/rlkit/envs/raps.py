@@ -43,8 +43,8 @@ class FrankaEnv:
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
         self.image_shape = (3, 64, 64)
-        self.wkspace_total_low = np.array([0.3, -0.2, 0.1])
-        self.wkspace_total_high = np.array([0.63, 0.23, 0.25])
+        self.wkspace_total_low = np.array([0.35, -0.21, 0.12])
+        self.wkspace_total_high = np.array([0.67, 0.21, 0.13])
         self.reward_range = (0, 1)
         self.metadata = {}
 
@@ -84,9 +84,6 @@ class FrankaEnv:
                 use_impedance=False,
             )
         except:
-            import ipdb
-
-            ipdb.set_trace()
             self.franka.goto_pose(
                 T_ee_world,
                 duration=0.1,
@@ -137,13 +134,13 @@ class FrankaEnv:
                 #     1.07388106,
                 # ],
                 [
-                    0.00632841,
-                    0.07643715,
-                    0.31071674,
-                    -2.43213159,
-                    -0.09181293,
-                    2.50857672,
-                    1.13996233,
+                    -2.22881264e-04,
+                    2.35892084e-01,
+                    3.20050178e-01,
+                    -2.18306761e00,
+                    -2.32355082e-01,
+                    2.45681416e00,
+                    1.24319030e00,
                 ],
                 duration=5,
                 skill_desc="",
@@ -168,17 +165,18 @@ class FrankaEnv:
             )
             self.franka.goto_joints(
                 [
-                    0.00632841,
-                    0.07643715,
-                    0.31071674,
-                    -2.43213159,
-                    -0.09181293,
-                    2.50857672,
-                    1.13996233,
+                    -2.22881264e-04,
+                    2.35892084e-01,
+                    3.20050178e-01,
+                    -2.18306761e00,
+                    -2.32355082e-01,
+                    2.45681416e00,
+                    1.24319030e00,
                 ],
                 duration=5,
                 skill_desc="",
                 block=True,
+                ignore_virtual_walls=True,
                 ignore_errors=True,
             )
         obs = self.get_image()
@@ -327,7 +325,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            duration = 1
+            duration = 2
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
@@ -354,7 +352,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            duration = 1
+            duration = 2
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
@@ -375,7 +373,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         if self.hardcode_gripper_actions:
             try:
                 self.franka.goto_gripper(
-                    0.04,
+                    0.0,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -390,7 +388,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
                 ipdb.set_trace()
                 self.franka.goto_gripper(
-                    0.04,
+                    0.0,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -679,12 +677,14 @@ class DiceEnvWrapper(gym.Wrapper):
         i["reference dice center"] = self.reference_dice_center
         if d:
             try:
-                self.goto_pose([0.3, .23, .25])
+                self.lift(0.5)
+                self.goto_pose([0.3, 0.23, 0.25])
             except:
                 import ipdb
 
                 ipdb.set_trace()
-                self.goto_pose([0.3, .23, .25])
+                self.lift(0.5)
+                self.goto_pose([0.33, 0.22, 0.2])
             r = self.reward()
 
             if r > 0.0:
@@ -863,6 +863,7 @@ def test_dice_raps(num_eps=10):
 
     print(f"RAPS time_per_ep {time_per_ep}")
 
+
 def test_grasp():
     env = FrankaPrimitivesEnv()
     env.reset_action_space(
@@ -871,7 +872,7 @@ def test_grasp():
         max_path_length=5,
     )
     env = DiceEnvWrapper(env, divider_xpos=175)
-    import ipdb; ipdb.set_trace()
+
 
 def main():
     test_grasp()
