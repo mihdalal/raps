@@ -40,7 +40,7 @@ def video_post_epoch_func(algorithm, epoch):
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
     with torch.cuda.amp.autocast():
-        if epoch == -1 or epoch % 10 == 0:
+        if epoch == -1 or epoch % 1 == 0:
             null_state = algorithm.trainer.world_model.initial(4)
             null_acts = ptu.zeros((4, env.action_space.low.size))
             reset_obs = []

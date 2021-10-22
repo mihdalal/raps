@@ -69,9 +69,12 @@ def experiment(variant):
         discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
         continuous_action_dim = eval_envs[0].max_arg_len
         discrete_action_dim = eval_envs[0].num_primitives
-        if not discrete_continuous_dist:
-            continuous_action_dim = continuous_action_dim + discrete_action_dim
+        if variant["env_kwargs"]["fixed_schema"]:
             discrete_action_dim = 0
+        else:
+            if not discrete_continuous_dist:
+                continuous_action_dim = continuous_action_dim + discrete_action_dim
+                discrete_action_dim = 0
         action_dim = continuous_action_dim + discrete_action_dim
         use_batch_length = False
     world_model_class = WorldModel

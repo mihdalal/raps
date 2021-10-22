@@ -43,8 +43,8 @@ class FrankaEnv:
             low=0, high=255, dtype=np.uint8, shape=(64 * 64 * 3,)
         )
         self.image_shape = (3, 64, 64)
-        self.wkspace_total_low = np.array([0.35, -0.21, 0.12])
-        self.wkspace_total_high = np.array([0.67, 0.21, 0.13])
+        self.wkspace_total_low = np.array([0.33, -0.05, 0.11])
+        self.wkspace_total_high = np.array([0.65, 0.22, 0.165])
         self.reward_range = (0, 1)
         self.metadata = {}
 
@@ -124,23 +124,14 @@ class FrankaEnv:
                 skill_desc="GoToGripper",
             )
             self.franka.goto_joints(
-                # [
-                #     0.08151406,
-                #     -0.22787109,
-                #     0.37234701,
-                #     -2.83323464,
-                #     0.14981936,
-                #     2.62942644,
-                #     1.07388106,
-                # ],
                 [
-                    -2.22881264e-04,
-                    2.35892084e-01,
-                    3.20050178e-01,
-                    -2.18306761e00,
-                    -2.32355082e-01,
-                    2.45681416e00,
-                    1.24319030e00,
+                    -2.46222693e-03,
+                    1.11506726e-01,
+                    3.02650826e-01,
+                    -2.44091717e00,
+                    -8.45936288e-02,
+                    2.61656971e00,
+                    1.18382944e00,
                 ],
                 duration=5,
                 skill_desc="",
@@ -165,13 +156,13 @@ class FrankaEnv:
             )
             self.franka.goto_joints(
                 [
-                    -2.22881264e-04,
-                    2.35892084e-01,
-                    3.20050178e-01,
-                    -2.18306761e00,
-                    -2.32355082e-01,
-                    2.45681416e00,
-                    1.24319030e00,
+                    -2.46222693e-03,
+                    1.11506726e-01,
+                    3.02650826e-01,
+                    -2.44091717e00,
+                    -8.45936288e-02,
+                    2.61656971e00,
+                    1.18382944e00,
                 ],
                 duration=5,
                 skill_desc="",
@@ -194,11 +185,13 @@ class FrankaPrimitivesEnv(FrankaEnv):
         action_scale=1,
         max_path_length=5,
         hardcode_gripper_actions=True,
+        fixed_schema=True,
     ):
         self.max_path_length = max_path_length
         self.action_scale = action_scale
         self.hardcode_gripper_actions = hardcode_gripper_actions
 
+        self.timestep_to_primitive_idx = {0: 0, 1: 1, 2: 2, 3: 4, 4: 3}
         # primitives
         self.primitive_idx_to_name = {
             0: "move_delta_ee_pose",
@@ -255,20 +248,25 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
         self.num_primitives = len(self.primitive_name_to_func)
         self.control_mode = control_mode
-
+        self.fixed_schema = fixed_schema
         if self.control_mode == "primitives":
-            action_space_low = -1 * np.ones(self.max_arg_len)
-            action_space_high = np.ones(self.max_arg_len)
-            act_lower_primitive = np.zeros(self.num_primitives)
-            act_upper_primitive = np.ones(self.num_primitives)
-            act_lower = np.concatenate((act_lower_primitive, action_space_low))
-            act_upper = np.concatenate(
-                (
-                    act_upper_primitive,
-                    action_space_high,
+            if self.fixed_schema:
+                action_space_low = -1 * np.ones(self.max_arg_len)
+                action_space_high = np.ones(self.max_arg_len)
+                self.action_space = Box(action_space_low, action_space_high)
+            else:
+                action_space_low = -1 * np.ones(self.max_arg_len)
+                action_space_high = np.ones(self.max_arg_len)
+                act_lower_primitive = np.zeros(self.num_primitives)
+                act_upper_primitive = np.ones(self.num_primitives)
+                act_lower = np.concatenate((act_lower_primitive, action_space_low))
+                act_upper = np.concatenate(
+                    (
+                        act_upper_primitive,
+                        action_space_high,
+                    )
                 )
-            )
-            self.action_space = Box(act_lower, act_upper, dtype=np.float32)
+                self.action_space = Box(act_lower, act_upper, dtype=np.float32)
 
     def reward(self):
         reward = 0
@@ -281,7 +279,6 @@ class FrankaPrimitivesEnv(FrankaEnv):
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        self.action_timestep += 1
         if self.control_mode == "end_effector":
             return super().step(action)
 
@@ -290,6 +287,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
         reward = self.reward()
         obs = self.get_image()
+        self.action_timestep += 1
         done = self.action_timestep == self.max_path_length
         info = {}
 
@@ -325,7 +323,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            duration = 2
+            duration = 1
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
@@ -352,7 +350,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
                     skill_desc="GoToGripper",
                 )
             T_ee_world.translation += delta
-            duration = 2
+            duration = 1
             self.franka.goto_pose(
                 T_ee_world,
                 duration=duration,
@@ -373,7 +371,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
         if self.hardcode_gripper_actions:
             try:
                 self.franka.goto_gripper(
-                    0.0,
+                    0.02,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -388,7 +386,7 @@ class FrankaPrimitivesEnv(FrankaEnv):
 
                 ipdb.set_trace()
                 self.franka.goto_gripper(
-                    0.0,
+                    0.02,
                     grasp=False,
                     speed=0.1,
                     force=0.0,
@@ -438,32 +436,12 @@ class FrankaPrimitivesEnv(FrankaEnv):
     def open_gripper(self, d):
         if self.hardcode_gripper_actions:
             try:
-                self.franka.goto_gripper(
-                    0.08,
-                    grasp=False,
-                    speed=0.1,
-                    force=0.0,
-                    epsilon_inner=0.08,
-                    epsilon_outer=0.08,
-                    block=True,
-                    ignore_errors=True,
-                    skill_desc="GoToGripper",
-                )
+                self.franka.open_gripper()
             except:
                 import ipdb
 
                 ipdb.set_trace()
-                self.franka.goto_gripper(
-                    0.08,
-                    grasp=False,
-                    speed=0.1,
-                    force=0.0,
-                    epsilon_inner=0.08,
-                    epsilon_outer=0.08,
-                    block=True,
-                    ignore_errors=True,
-                    skill_desc="GoToGripper",
-                )
+                self.franka.open_gripper()
         else:
             d = d * 0.08
             d = np.abs(d)
@@ -573,15 +551,18 @@ class FrankaPrimitivesEnv(FrankaEnv):
     def act(self, a):
         a = np.clip(a, self.action_space.low, self.action_space.high)
         a = a * self.action_scale
-        primitive_idx, primitive_args = (
-            np.argmax(a[: self.num_primitives]),
-            a[self.num_primitives :],
-        )
+        if self.fixed_schema:
+            primitive_idx = self.timestep_to_primitive_idx[self.action_timestep]
+            primitive_args = a
+        else:
+            primitive_idx, primitive_args = (
+                np.argmax(a[: self.num_primitives]),
+                a[self.num_primitives :],
+            )
         primitive_name = self.primitive_idx_to_name[primitive_idx]
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)
         primitive_action = primitive_name_to_action_dict[primitive_name]
         primitive = self.primitive_name_to_func[primitive_name]
-        # print(primitive_name, primitive_action)
         stats = primitive(primitive_action)
         return stats
 
@@ -677,14 +658,16 @@ class DiceEnvWrapper(gym.Wrapper):
         i["reference dice center"] = self.reference_dice_center
         if d:
             try:
+                self.open_gripper(None)
                 self.lift(0.5)
-                self.goto_pose([0.3, 0.23, 0.25])
+                self.goto_pose([0.3, -0.1, 0.165])
             except:
                 import ipdb
 
                 ipdb.set_trace()
+                self.open_gripper(None)
                 self.lift(0.5)
-                self.goto_pose([0.33, 0.22, 0.2])
+                self.goto_pose([0.3, -0.1, 0.165])
             r = self.reward()
 
             if r > 0.0:

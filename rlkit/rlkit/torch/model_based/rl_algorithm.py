@@ -313,6 +313,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.total_train_expl_time += time.time() - st
 
             self._end_epoch(epoch)
+            save_replay_buffer(self.replay_buffer, logger.get_snapshot_dir())
 
 
 class TorchBatchRLAlgorithm(BatchRLAlgorithm):
