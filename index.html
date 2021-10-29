@@ -174,26 +174,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="canonical" href="https://mihdalal.github.io/raps/" />
   <meta name="referrer" content="no-referrer-when-downgrade" />
-
-  <!-- <meta property="og:site_name" content="Planning to Explore" />
-  <meta property="og:type" content="video.other" />
-  <meta property="og:title" content="Planning to Explore via Self-Supervised World Models" />
-  <meta property="og:description" content="Sekar, Rybkin, Daniilidis, Abbeel, Hafner, Pathak. Planning to Explore via Self-Supervised World Models. ICML 2020." />
-  <meta property="og:url" content="https://ramanans1.github.io/plan2explore/" />
-  <meta property="og:image" content="https://ramanans1.github.io/plan2explore/resources/setting.png" />
-  <meta property="og:video" content="https://www.youtube.com/v/GftqnPWsCWw" /> -->
-
-  <!-- <meta property="article:publisher" content="https://github.com/ramanans1" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Planning to Explore via Self-Supervised World Models" />
-  <meta name="twitter:description" content="Sekar, Rybkin, Daniilidis, Abbeel, Hafner, Pathak. Planning to Explore via Self-Supervised World Models. ICML 2020." />
-  <meta name="twitter:url" content="https://ramanans1.github.io/plan2explore/" />
-  <meta name="twitter:image" content="https://ramanans1.github.io/plan2explore/resources/setting.png" /> -->
-  <!-- <meta name="twitter:label1" content="Written by" />
-  <meta name="twitter:data1" content="Deepak Pathak" /> -->
-  <!-- <meta name="twitter:label2" content="Filed under" />
-  <meta name="twitter:data2" content="" /> -->
-  <meta name="twitter:site" content="@pathak2206" />
   <meta property="og:image:width" content="1600" />
   <meta property="og:image:height" content="900" />
 
@@ -222,28 +202,25 @@
         <tr/>
       </table>
 
+      <table align=center width=600px>
+        <tr>
+          <td align=center width=575px><center><span style="font-size:18px">* equal advising</span></center></td>
+        <tr/>
+      </table>
       <table align=center width=750px style="padding-top:20px">
         <tr>
           <td align=center width=725px>
-          <center><span style="font-size:22px"><a href="https://nips.cc/Conferences/2021" target="_blank">NeurIPS 2021</a></span></center></td>
+          <center><span style="font-size:22px"><a href="https://nips.cc/Conferences/2021" target="_blank">Neural Information Processing Systems (NeurIPS), 2021</a></span></center></td>
         <tr/>
       </table>
-      <table align=center width=600px>
-        <tr>
-          <td align=center width=575px><center><span style="font-size:20px">* equal advising</span></center></td>
-        <tr/>
-      </table>
-
-      <img src="resources/RAPS_video.gif" />
 
       <div class="table-like" style="justify-content:space-evenly;max-width:700px;margin:auto;padding:5px">
-        <!-- <div><center><span style="font-size:28px"><a href="https://arxiv.org/abs/2005.05960">[Paper]</a></span></center></div> -->
-        <!-- <div><center><span style="font-size:28px"><a href='https://github.com/mihdalal/raps'>[GitHub Code]</a></span></center> </div> -->
+        <div><center><span style="font-size:22px"><a href="https://arxiv.org/pdf/2110.15360.pdf">[Paper]</a></span></center></div>
+        <div><center><span style="font-size:22px"><a href="http://arxiv.org/abs/2110.15360">[Arxiv]</a></span></center></div>
+        <div><center><span style="font-size:22px"><a href='https://github.com/mihdalal/raps'>[GitHub Code]</a></span></center> </div>
       </div>
 
-      <!-- <center>
-      <iframe width="768" height="432" max-width="100%" src="https://www.youtube.com/embed/GftqnPWsCWw?rel=0" frameborder="0" allowfullscreen></iframe></center>
-      <br> -->
+      <img src="resources/RAPS_video.gif" />
 
       <div style="width:800px; margin:0 auto; text-align=right;">
         <center>Despite the potential of reinforcement learning (RL) for building general-purpose robotic systems, training  RL agents to solve robotics tasks still remains challenging due to the difficulty of exploration in purely continuous action spaces. Addressing this problem is an active area of research with the majority of focus on improving RL methods via better optimization or more efficient exploration. An alternate but important component to consider improving is the interface of the RL algorithm with the robot. In this work, we manually specify a library of robot action primitives (RAPS), parameterized with arguments that are learned by an RL policy. These parameterized primitives are expressive, simple to implement, enable efficient exploration and can be transferred across robots, tasks and environments. We perform a thorough empirical study across challenging tasks in three distinct domains with image input and a sparse terminal reward. We find that our simple change to the action interface substantially improves both the learning efficiency and task performance irrespective of the underlying RL algorithm, significantly outperforming prior methods which learn skills from offline expert data.
@@ -291,11 +268,10 @@
               <tr>
               <td width="30%" align=left>
               <!-- <p style="margin-top:4px;"></p> -->
-              <!-- <a href="https://arxiv.org/pdf/2005.05960.pdf"><img style="height:150px" src="resources/thumbnail.png"/></a> -->
-              <img src="resources/thumbnail.png" />
+              <a href="https://arxiv.org/abs/2110.15360"><img style="height:150px" src="resources/thumbnail.png"/></a>
               <center>
-              <!-- <span style="font-size:20pt"><a href="https://arxiv.org/pdf/2005.05960.pdf">[Paper]</a>
-              <span style="font-size:20pt"><a href="https://arxiv.org/abs/2005.05960">[ArXiv]</a> -->
+              <span style="font-size:20pt"><a href="https://arxiv.org/pdf/2110.15360.pdf">[Paper]</a>
+              <span style="font-size:20pt"><a href="https://arxiv.org/abs/2110.15360">[ArXiv]</a>
               </center>
               </td>
               <td width="6%" align=center>
@@ -318,7 +294,8 @@
   @inproceedings{dalal2021raps,
     Author = {Dalal, Murtaza and Pathak, Deepak and
               Salakhutdinov, Ruslan},
-    Title = {Accelerating Robotic Reinforcement Learning via Parameterized Action Primitives},
+    Title = {Accelerating Robotic Reinforcement Learning
+      via Parameterized Action Primitives},
     Booktitle = {NeurIPS},
     Year = {2021}
 }
