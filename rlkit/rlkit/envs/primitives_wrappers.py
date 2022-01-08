@@ -698,7 +698,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             total_success += info["success"]
         return np.array((total_reward, total_success))
 
-    def goto_pose(self, pose, grasp=True):
+    def goto_pose(self, pose, grasp=False):
         total_reward, total_success = 0, 0
         for _ in range(300):
             delta = pose - self.get_endeff_pos()
