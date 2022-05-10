@@ -1,7 +1,7 @@
 torch==1.7.1
 torchvision==0.8.2
 gtimer
-mujoco_py==2.0.2.13
+mujoco-py==2.0.2.13
 gym==0.18.3
 numpy-quaternion==2021.4.5.14.42.35
 python-dateutil==2.8.1
@@ -18,4 +18,4 @@ numba==0.53.1
 click==8.0.1
 termcolor==1.1.0
 scikit-image==0.17.2
-tensorboard==2.5.0
+tensorboard

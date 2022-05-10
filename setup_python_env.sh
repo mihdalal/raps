@@ -1,6 +1,6 @@
 cd $1/rlkit
 pip install -e .
-mkdir data/
+mkdir -p data/
 cd $1/d4rl
 pip install -e .
 cd $1/metaworld
