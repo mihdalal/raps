@@ -118,7 +118,7 @@ if __name__ == "__main__":
         save_video=True,
     )
 
-    search_space = {"env_name": [args.env]}
+    search_space = {"env_name": [args.exp_prefix]}
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
