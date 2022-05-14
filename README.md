@@ -59,6 +59,7 @@ conda create -n raps python=3.7
 conda activate raps
 ./setup_python_env.sh <absolute path to raps>
 ```
+Please ignore any requirements conflicts, the code will work regardless.
 
 ## Training and Evaluation
 
