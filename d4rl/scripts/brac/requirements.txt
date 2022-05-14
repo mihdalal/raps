@@ -3,7 +3,7 @@ h5py
 git+git://github.com/aravindr93/mjrl@master#egg=mjrl
 git+git://github.com/rlworkgroup/metaworld.git@master#egg=metaworld
 scipy
-lxml==4.4.1
+lxml==4.6.5
 pyprind==2.11.2
 nose2==0.8.0
 six
@@ -30,7 +30,7 @@ plotly
 absl-py>=0.5.0
 mujoco-py
 numpy>=1.13.3
-tensorflow==1.15.2
+tensorflow==2.5.3
 tensorflow-probability==0.8.0rc0
 gin-config
 tf-agents
