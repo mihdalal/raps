@@ -11,11 +11,10 @@ cloudpickle
 awscli
 matplotlib==3.3.4
 stable-baselines3==1.0
-numpy
+numpy==1.21.6
 h5py
 opencv-python==4.5.2.52
 numba==0.53.1
 click==8.0.1
 termcolor==1.1.0
 scikit-image==0.17.2
-tensorboard==2.5.0
