@@ -1,0 +1,5 @@
+conda activate IKEA_RAPS
+export MUJOCO_GL='egl'
+export MKL_THREADING_LAYER=GNU
+export D4RL_SUPPRESS_IMPORT_ERROR='1'
+export LD_LIBRARY_PATH=/usr/lib/libnvidia-gtk3.so.470.57.01:/usr/lib/nvidia:/home/digi2/.mujoco/mujoco200/bin:/home/digi2/.mujoco/mujoco200/lib:/usr/lib/nvidia-000

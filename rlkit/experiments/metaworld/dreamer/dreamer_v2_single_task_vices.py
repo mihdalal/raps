@@ -112,7 +112,7 @@ if __name__ == "__main__":
         expl_amount=0.3,
     )
 
-    search_space = {"env_name": [args.exp_prefix]}
+    search_space = {"env_name": [args.env]}
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,

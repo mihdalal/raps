@@ -1,7 +1,7 @@
 torch==1.7.1
 torchvision==0.8.2
 gtimer
-mujoco-py==2.0.2.13
+mujoco_py==2.0.2.13
 gym==0.18.3
 numpy-quaternion==2021.4.5.14.42.35
 python-dateutil==2.8.1

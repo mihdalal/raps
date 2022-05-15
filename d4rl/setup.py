@@ -8,7 +8,7 @@ setup(
     install_requires=[
         "gym",
         "numpy",
-        "mujoco-py",
+        "mujoco_py",
         "h5py",
         "termcolor",  # adept_envs dependency
         "click",  # adept_envs dependency
